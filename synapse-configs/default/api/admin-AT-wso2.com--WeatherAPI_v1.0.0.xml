@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<api xmlns="http://ws.apache.org/ns/synapse"
+     name="admin-AT-wso2.com--WeatherAPI"
+     context="/t/wso2.com/weatherapi/1.0.0"
+     version="1.0.0"
+     version-type="context">
+   <resource methods="GET" url-mapping="/*" faultSequence="fault">
+      <inSequence>
+         <filter source="$ctx:AM_KEY_TYPE" regex="PRODUCTION">
+            <then>
+               <property name="api.ut.backendRequestTime"
+                         expression="get-property('SYSTEM_TIME')"/>
+               <send>
+                  <endpoint name="admin-AT-wso2.com--WeatherAPI_APIproductionEndpoint_0">
+                     <http uri-template="http://api.openweathermap.org/data/2.5/weather"/>
+                  </endpoint>
+               </send>
+            </then>
+            <else>
+               <send>
+                  <endpoint name="admin-AT-wso2.com--WeatherAPI_APIsandboxEndpoint_0">
+                     <http uri-template="http://api.openweathermap.org/data/2.5/weather"/>
+                  </endpoint>
+               </send>
+            </else>
+         </filter>
+      </inSequence>
+      <outSequence>
+         <class name="org.wso2.carbon.apimgt.usage.publisher.APIMgtResponseHandler"/>
+         <send/>
+      </outSequence>
+   </resource>
+   <handlers>
+      <handler class="org.wso2.carbon.apimgt.gateway.handlers.security.CORSRequestHandler">
+         <property name="inline" value="ENDPOINT"/>
+      </handler>
+      <handler class="org.wso2.carbon.apimgt.gateway.handlers.security.APIAuthenticationHandler"/>
+      <handler class="org.wso2.carbon.apimgt.gateway.handlers.throttling.APIThrottleHandler">
+         <property name="id" value="A"/>
+         <property name="policyKey" value="gov:/apimgt/applicationdata/tiers.xml"/>
+      </handler>
+      <handler class="org.wso2.carbon.apimgt.usage.publisher.APIMgtUsageHandler"/>
+      <handler class="org.wso2.carbon.apimgt.usage.publisher.APIMgtGoogleAnalyticsTrackingHandler">
+         <property name="configKey" value="gov:/apimgt/statistics/ga-config.xml"/>
+      </handler>
+      <handler class="org.wso2.carbon.apimgt.gateway.handlers.ext.APIManagerExtensionHandler"/>
+   </handlers>
+</api>
